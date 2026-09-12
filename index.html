@@ -1,0 +1,1586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StellarShip — Deploy Soroban Contracts with Confidence</title>
+  <meta name="description" content="StellarShip is a deployment orchestration tool for the Stellar network. Build, deploy, and wire Soroban contracts with Git-tracked artifacts and auto-generated TypeScript bindings." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ─── DESIGN TOKENS ─────────────────────────────────────────── */
+    :root {
+      --color-void-black:    #000000;
+      --color-obsidian:      #0d0c11;
+      --color-charcoal:      #121212;
+      --color-onyx:          #12151d;
+      --color-smoke:         #050505;
+      --color-graphite:      #3e3c41;
+      --color-ash:           #848895;
+      --color-fog:           #ababba;
+      --color-bone-white:    #ffffff;
+      --color-hairline:      #eaecf0;
+
+      --font-primary: 'Inter', ui-sans-serif, system-ui, sans-serif;
+      --font-mono:    'JetBrains Mono', monospace;
+
+      --text-caption:    12px;
+      --text-body-sm:    14px;
+      --text-body:       16px;
+      --text-body-lg:    18px;
+      --text-subheading: 21px;
+      --text-heading-sm: 24px;
+      --text-heading:    36px;
+      --text-heading-lg: 64px;
+      --text-display:    88px;
+
+      --radius-nav:     4px;
+      --radius-card:    12px;
+      --radius-badge:   9999px;
+      --radius-input:   12px;
+      --radius-button:  9999px;
+
+      --shadow-pill: rgba(0,0,0,0.17) 0px 2px 4px 1px,
+                     rgba(255,255,255,0.29) 0px -4px 12px 0px inset,
+                     rgba(255,255,255,0.4)  0px  1px  0px 0px inset,
+                     rgba(255,255,255,0.2)  0px -1px  0px 0px inset;
+
+      --page-max:    1280px;
+      --section-gap: 80px;
+      --card-pad:    24px;
+    }
+
+    /* ─── RESET ─────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--color-void-black);
+      color: var(--color-fog);
+      font-family: var(--font-primary);
+      font-size: var(--text-body);
+      line-height: 1.56;
+      letter-spacing: -0.16px;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+    img { display: block; max-width: 100%; }
+    button { cursor: pointer; border: none; background: none; font-family: inherit; }
+    ul { list-style: none; }
+
+    /* ─── UTILITIES ──────────────────────────────────────────────── */
+    .container {
+      max-width: var(--page-max);
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    .pill-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 22px;
+      border-radius: var(--radius-button);
+      background: var(--color-charcoal);
+      color: var(--color-bone-white);
+      font-family: var(--font-primary);
+      font-size: var(--text-body);
+      font-weight: 500;
+      letter-spacing: -0.16px;
+      box-shadow: var(--shadow-pill);
+      transition: opacity 0.2s ease, transform 0.15s ease;
+    }
+    .pill-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+    .pill-btn:active { transform: translateY(0); }
+
+    .ghost-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 20px;
+      border-radius: var(--radius-button);
+      border: 1px solid rgba(234,236,240,0.15);
+      background: transparent;
+      color: var(--color-fog);
+      font-family: var(--font-primary);
+      font-size: var(--text-body-sm);
+      font-weight: 400;
+      letter-spacing: -0.14px;
+      transition: border-color 0.2s ease, color 0.2s ease;
+    }
+    .ghost-btn:hover { border-color: rgba(234,236,240,0.35); color: var(--color-bone-white); }
+
+    .section-heading {
+      font-size: var(--text-heading-lg);
+      font-weight: 300;
+      color: var(--color-bone-white);
+      line-height: 1.13;
+      letter-spacing: -2.56px;
+    }
+    .sub-label {
+      font-size: var(--text-body-sm);
+      font-weight: 500;
+      color: var(--color-ash);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* ─── NAV ────────────────────────────────────────────────────── */
+    #nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: var(--color-onyx);
+      border-bottom: 1px solid rgba(234,236,240,0.07);
+      height: 56px;
+      display: flex;
+      align-items: center;
+    }
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      max-width: var(--page-max);
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .nav-logo-mark {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .nav-logo-mark span {
+      display: block;
+      width: 18px;
+      height: 2px;
+      background: var(--color-bone-white);
+      border-radius: 2px;
+    }
+    .nav-logo-mark span:nth-child(2) { width: 12px; }
+    .nav-logo-mark span:nth-child(3) { width: 15px; }
+    .nav-wordmark {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--color-bone-white);
+      letter-spacing: -0.02em;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+    .nav-links a {
+      font-size: var(--text-body-sm);
+      font-weight: 400;
+      color: var(--color-ash);
+      letter-spacing: -0.14px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: color 0.2s ease;
+    }
+    .nav-links a:hover { color: var(--color-bone-white); }
+    .nav-links a svg { opacity: 0.5; }
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .search-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--color-obsidian);
+      border: 1px solid rgba(234,236,240,0.1);
+      border-radius: var(--radius-input);
+      padding: 6px 12px;
+      width: 220px;
+    }
+    .search-bar svg { color: var(--color-ash); flex-shrink: 0; }
+    .search-bar input {
+      background: none;
+      border: none;
+      outline: none;
+      font-family: var(--font-primary);
+      font-size: var(--text-body-sm);
+      color: var(--color-bone-white);
+      letter-spacing: -0.14px;
+      width: 100%;
+    }
+    .search-bar input::placeholder { color: var(--color-ash); }
+    .kbd-badge {
+      background: var(--color-graphite);
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--color-ash);
+      flex-shrink: 0;
+    }
+
+    /* ─── HERO ───────────────────────────────────────────────────── */
+    #hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      background: linear-gradient(180deg, #000000 0%, #14001d 100%);
+      padding-top: 56px;
+    }
+    .hero-aurora {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    /* Animated SVG aurora */
+    .aurora-svg {
+      position: absolute;
+      right: -5%;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 65%;
+      height: 110%;
+      opacity: 0.9;
+    }
+    .hero-inner {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: 40% 60%;
+      align-items: center;
+      min-height: calc(100vh - 56px);
+      max-width: var(--page-max);
+      margin: 0 auto;
+      padding: 80px 24px;
+      width: 100%;
+    }
+    .hero-content {}
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: var(--radius-badge);
+      border: 1px solid rgba(234,236,240,0.15);
+      background: rgba(13,12,17,0.7);
+      font-size: var(--text-body-sm);
+      color: var(--color-fog);
+      letter-spacing: -0.14px;
+      margin-bottom: 32px;
+    }
+    .hero-badge-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #9b5de5;
+      box-shadow: 0 0 8px #9b5de5;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .hero-h1 {
+      font-size: clamp(48px, 6vw, var(--text-display));
+      font-weight: 300;
+      color: var(--color-bone-white);
+      line-height: 1;
+      letter-spacing: -3.52px;
+      margin-bottom: 24px;
+    }
+    .hero-h1 em {
+      font-style: normal;
+      background: linear-gradient(135deg, #c77dff, #e040fb, #7fff7f);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-sub {
+      font-size: var(--text-body-lg);
+      color: var(--color-fog);
+      line-height: 1.5;
+      letter-spacing: -0.18px;
+      max-width: 400px;
+      margin-bottom: 40px;
+    }
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .hero-code-snippet {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(13,12,17,0.8);
+      border: 1px solid rgba(234,236,240,0.12);
+      border-radius: var(--radius-button);
+      padding: 9px 18px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--color-fog);
+    }
+    .hero-code-snippet .prompt { color: var(--color-graphite); }
+    .hero-code-snippet .cmd    { color: var(--color-bone-white); }
+    .hero-scroll-hint {
+      position: absolute;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      color: var(--color-ash);
+      font-size: var(--text-caption);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      animation: bounce 2.4s ease-in-out infinite;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50%       { transform: translateX(-50%) translateY(6px); }
+    }
+
+    /* ─── STATS BAND ─────────────────────────────────────────────── */
+    #stats {
+      border-top: 1px solid rgba(234,236,240,0.07);
+      border-bottom: 1px solid rgba(234,236,240,0.07);
+      background: var(--color-obsidian);
+      padding: 40px 0;
+    }
+    .stats-inner {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 32px;
+    }
+    .stat-item { text-align: center; }
+    .stat-value {
+      font-size: 36px;
+      font-weight: 300;
+      color: var(--color-bone-white);
+      letter-spacing: -1.08px;
+      line-height: 1.22;
+    }
+    .stat-label {
+      font-size: var(--text-body-sm);
+      color: var(--color-ash);
+      letter-spacing: -0.14px;
+      margin-top: 4px;
+    }
+    .stat-divider {
+      width: 1px;
+      height: 40px;
+      background: rgba(234,236,240,0.1);
+    }
+
+    /* ─── FEATURES ───────────────────────────────────────────────── */
+    #features {
+      padding: var(--section-gap) 0;
+    }
+    .features-header {
+      margin-bottom: 56px;
+    }
+    .features-header .sub-label { margin-bottom: 16px; }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: rgba(234,236,240,0.07);
+      border: 1px solid rgba(234,236,240,0.07);
+      border-radius: var(--radius-card);
+      overflow: hidden;
+    }
+    .feature-card {
+      background: var(--color-obsidian);
+      padding: var(--card-pad);
+      transition: background 0.25s ease;
+    }
+    .feature-card:hover { background: #110f18; }
+    .feature-icon {
+      width: 40px; height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(234,236,240,0.1);
+      border-radius: 8px;
+      margin-bottom: 20px;
+      color: var(--color-ash);
+    }
+    .feature-card h3 {
+      font-size: var(--text-heading-sm);
+      font-weight: 400;
+      color: var(--color-bone-white);
+      letter-spacing: -0.48px;
+      line-height: 1.33;
+      margin-bottom: 12px;
+    }
+    .feature-card p {
+      font-size: var(--text-body-sm);
+      color: var(--color-ash);
+      letter-spacing: -0.14px;
+      line-height: 1.6;
+    }
+
+    /* ─── HOW IT WORKS ───────────────────────────────────────────── */
+    #how {
+      padding: var(--section-gap) 0;
+      background: linear-gradient(180deg, var(--color-void-black) 0%, #0a0010 100%);
+    }
+    .how-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: center;
+    }
+    .how-left .sub-label { margin-bottom: 16px; }
+    .how-left .section-heading { margin-bottom: 24px; }
+    .how-left p {
+      color: var(--color-fog);
+      font-size: var(--text-body);
+      line-height: 1.7;
+      margin-bottom: 32px;
+    }
+    .pipeline {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .pipeline-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 20px 0;
+      border-bottom: 1px solid rgba(234,236,240,0.06);
+    }
+    .pipeline-step:last-child { border-bottom: none; }
+    .step-num {
+      flex-shrink: 0;
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      border: 1px solid rgba(234,236,240,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--color-ash);
+      margin-top: 2px;
+    }
+    .step-content h4 {
+      font-size: var(--text-body);
+      font-weight: 500;
+      color: var(--color-bone-white);
+      letter-spacing: -0.16px;
+      margin-bottom: 4px;
+    }
+    .step-content p {
+      font-size: var(--text-body-sm);
+      color: var(--color-ash);
+      letter-spacing: -0.14px;
+      line-height: 1.6;
+    }
+    /* Diagram panel */
+    .how-right {}
+    .diagram-panel {
+      background: var(--color-obsidian);
+      border: 1px solid rgba(234,236,240,0.08);
+      border-radius: var(--radius-card);
+      overflow: hidden;
+    }
+    .diagram-bar {
+      background: var(--color-onyx);
+      border-bottom: 1px solid rgba(234,236,240,0.07);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .dot-red    { background: #ff5f57; }
+    .dot-yellow { background: #febc2e; }
+    .dot-green  { background: #28c840; }
+    .diagram-bar-label {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--color-graphite);
+      margin-left: auto;
+    }
+    .diagram-body { padding: 24px; font-family: var(--font-mono); font-size: 13px; }
+    .d-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(234,236,240,0.05);
+    }
+    .d-row:last-child { border-bottom: none; }
+    .d-icon {
+      width: 32px; height: 32px;
+      border-radius: 6px;
+      border: 1px solid rgba(234,236,240,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .d-name { color: var(--color-bone-white); flex: 1; }
+    .d-tag {
+      padding: 2px 10px;
+      border-radius: var(--radius-badge);
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .d-tag.success { background: rgba(40,200,64,0.1); color: #28c840; }
+    .d-tag.info    { background: rgba(155,93,229,0.12); color: #c77dff; }
+    .d-tag.warn    { background: rgba(254,188,46,0.1); color: #febc2e; }
+    .d-arrow { color: var(--color-graphite); font-size: 16px; }
+
+    /* ─── CLI SECTION ────────────────────────────────────────────── */
+    #cli {
+      padding: var(--section-gap) 0;
+    }
+    .cli-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 64px;
+      align-items: start;
+    }
+    .cli-header .sub-label { margin-bottom: 16px; }
+    .cli-header .section-heading { margin-bottom: 16px; font-size: 48px; letter-spacing: -2px; }
+    .cli-header p { color: var(--color-fog); line-height: 1.7; margin-bottom: 32px; }
+    .cmd-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .cmd-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(234,236,240,0.06);
+      transition: padding-left 0.2s ease;
+    }
+    .cmd-row:last-child { border-bottom: none; }
+    .cmd-row:hover { padding-left: 8px; }
+    .cmd-name {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--color-bone-white);
+      min-width: 120px;
+    }
+    .cmd-name .prefix { color: var(--color-ash); }
+    .cmd-desc {
+      font-size: var(--text-body-sm);
+      color: var(--color-ash);
+      letter-spacing: -0.14px;
+    }
+    .cmd-arrow {
+      margin-left: auto;
+      color: var(--color-graphite);
+      flex-shrink: 0;
+      transition: color 0.2s, transform 0.2s;
+    }
+    .cmd-row:hover .cmd-arrow { color: var(--color-fog); transform: translateX(4px); }
+    /* Terminal */
+    .cli-terminal {
+      background: var(--color-obsidian);
+      border: 1px solid rgba(234,236,240,0.08);
+      border-radius: var(--radius-card);
+      overflow: hidden;
+      position: sticky;
+      top: 80px;
+    }
+    .term-bar {
+      background: var(--color-onyx);
+      border-bottom: 1px solid rgba(234,236,240,0.07);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .term-body {
+      padding: 20px 20px 28px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+    .term-line { display: flex; gap: 8px; margin-bottom: 4px; }
+    .term-prompt { color: var(--color-graphite); }
+    .term-cmd    { color: var(--color-bone-white); }
+    .term-out    { color: var(--color-ash); margin-left: 0; }
+    .term-out.success { color: #28c840; }
+    .term-out.info    { color: #c77dff; }
+    .term-out.dim     { color: var(--color-graphite); }
+    .term-spacer { margin-bottom: 12px; }
+    .term-cursor {
+      display: inline-block;
+      width: 8px; height: 14px;
+      background: var(--color-ash);
+      border-radius: 1px;
+      animation: blink 1.2s step-end infinite;
+      vertical-align: middle;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0; }
+    }
+
+    /* ─── ARTIFACTS SECTION ──────────────────────────────────────── */
+    #artifacts {
+      padding: var(--section-gap) 0;
+      background: linear-gradient(180deg, var(--color-void-black) 0%, #0d001a 50%, var(--color-void-black) 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .artifacts-bg-glow {
+      position: absolute;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px; height: 400px;
+      background: radial-gradient(ellipse, rgba(155,93,229,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .artifacts-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 64px;
+      align-items: center;
+      position: relative;
+    }
+    .artifacts-json {
+      background: var(--color-obsidian);
+      border: 1px solid rgba(234,236,240,0.08);
+      border-radius: var(--radius-card);
+      overflow: hidden;
+    }
+    .json-bar {
+      background: var(--color-onyx);
+      border-bottom: 1px solid rgba(234,236,240,0.07);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .json-filename {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--color-ash);
+      margin-left: 8px;
+    }
+    .json-git-badge {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      border-radius: var(--radius-badge);
+      border: 1px solid rgba(234,236,240,0.1);
+      font-size: 11px;
+      color: var(--color-ash);
+    }
+    .json-body {
+      padding: 20px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.8;
+    }
+    .jk  { color: #c77dff; }    /* key */
+    .jv  { color: #7fff9e; }    /* string value */
+    .jn  { color: #febc2e; }    /* number */
+    .jp  { color: var(--color-graphite); } /* punctuation */
+    .artifacts-right .sub-label { margin-bottom: 16px; }
+    .artifacts-right .section-heading { margin-bottom: 24px; font-size: 48px; letter-spacing: -2px; }
+    .artifacts-right p { color: var(--color-fog); line-height: 1.7; margin-bottom: 24px; }
+    .benefit-list { display: flex; flex-direction: column; gap: 16px; }
+    .benefit-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px;
+      background: rgba(13,12,17,0.5);
+      border: 1px solid rgba(234,236,240,0.07);
+      border-radius: 8px;
+    }
+    .benefit-icon {
+      flex-shrink: 0;
+      width: 32px; height: 32px;
+      border-radius: 6px;
+      border: 1px solid rgba(234,236,240,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+    }
+    .benefit-text h4 {
+      font-size: var(--text-body);
+      font-weight: 500;
+      color: var(--color-bone-white);
+      letter-spacing: -0.16px;
+      margin-bottom: 2px;
+    }
+    .benefit-text p {
+      font-size: var(--text-body-sm);
+      color: var(--color-ash);
+      letter-spacing: -0.14px;
+      margin: 0;
+    }
+
+    /* ─── PACKAGES ───────────────────────────────────────────────── */
+    #packages {
+      padding: var(--section-gap) 0;
+    }
+    .packages-header { text-align: center; margin-bottom: 56px; }
+    .packages-header .sub-label { margin-bottom: 16px; }
+    .packages-header .section-heading { margin-bottom: 0; }
+    .packages-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .package-card {
+      background: var(--color-obsidian);
+      border: 1px solid rgba(234,236,240,0.08);
+      border-radius: var(--radius-card);
+      padding: var(--card-pad);
+      transition: border-color 0.25s, transform 0.2s;
+    }
+    .package-card:hover {
+      border-color: rgba(234,236,240,0.18);
+      transform: translateY(-4px);
+    }
+    .pkg-name {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--color-ash);
+      margin-bottom: 16px;
+      padding: 4px 10px;
+      border-radius: var(--radius-badge);
+      border: 1px solid rgba(234,236,240,0.1);
+      display: inline-block;
+    }
+    .package-card h3 {
+      font-size: var(--text-heading-sm);
+      font-weight: 400;
+      color: var(--color-bone-white);
+      letter-spacing: -0.48px;
+      line-height: 1.33;
+      margin-bottom: 12px;
+    }
+    .package-card p {
+      font-size: var(--text-body-sm);
+      color: var(--color-ash);
+      letter-spacing: -0.14px;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    .pkg-features {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .pkg-feature {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: var(--text-body-sm);
+      color: var(--color-fog);
+      letter-spacing: -0.14px;
+    }
+    .pkg-feature::before {
+      content: '';
+      flex-shrink: 0;
+      width: 4px; height: 4px;
+      border-radius: 50%;
+      background: var(--color-graphite);
+    }
+
+    /* ─── CTA SECTION ────────────────────────────────────────────── */
+    #cta {
+      padding: var(--section-gap) 0;
+      background: linear-gradient(180deg, var(--color-void-black) 0%, #14001d 100%);
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+    }
+    .cta-aurora {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.3;
+    }
+    .cta-inner { position: relative; }
+    .cta-inner .sub-label { margin-bottom: 24px; }
+    .cta-inner h2 {
+      font-size: clamp(40px, 5vw, 64px);
+      font-weight: 300;
+      color: var(--color-bone-white);
+      letter-spacing: -2.56px;
+      line-height: 1.13;
+      margin-bottom: 20px;
+    }
+    .cta-inner p {
+      font-size: var(--text-body-lg);
+      color: var(--color-fog);
+      letter-spacing: -0.18px;
+      max-width: 480px;
+      margin: 0 auto 40px;
+    }
+    .cta-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    /* ─── FOOTER ─────────────────────────────────────────────────── */
+    #footer {
+      border-top: 1px solid rgba(234,236,240,0.07);
+      padding: 48px 0;
+      background: var(--color-void-black);
+    }
+    .footer-inner {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 48px;
+    }
+    .footer-brand .nav-logo { margin-bottom: 16px; }
+    .footer-brand p {
+      font-size: var(--text-body-sm);
+      color: var(--color-ash);
+      line-height: 1.6;
+      max-width: 280px;
+    }
+    .footer-col h4 {
+      font-size: var(--text-body-sm);
+      font-weight: 500;
+      color: var(--color-bone-white);
+      letter-spacing: -0.14px;
+      margin-bottom: 16px;
+    }
+    .footer-col ul { display: flex; flex-direction: column; gap: 10px; }
+    .footer-col ul li a {
+      font-size: var(--text-body-sm);
+      color: var(--color-ash);
+      letter-spacing: -0.14px;
+      transition: color 0.2s;
+    }
+    .footer-col ul li a:hover { color: var(--color-fog); }
+    .footer-bottom {
+      margin-top: 40px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(234,236,240,0.07);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .footer-bottom p {
+      font-size: var(--text-body-sm);
+      color: var(--color-ash);
+      letter-spacing: -0.14px;
+    }
+    .footer-social { display: flex; align-items: center; gap: 16px; }
+    .footer-social a {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      border: 1px solid rgba(234,236,240,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-ash);
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .footer-social a:hover { border-color: rgba(234,236,240,0.3); color: var(--color-fog); }
+
+    /* ─── FLOATING CHAT ──────────────────────────────────────────── */
+    #ask-ai {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      z-index: 200;
+    }
+    .ask-ai-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 20px;
+      border-radius: var(--radius-badge);
+      background: var(--color-obsidian);
+      border: 1px solid rgba(234,236,240,0.15);
+      color: var(--color-bone-white);
+      font-family: var(--font-primary);
+      font-size: var(--text-body-sm);
+      font-weight: 400;
+      cursor: pointer;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .ask-ai-btn:hover { border-color: rgba(234,236,240,0.3); transform: translateY(-2px); }
+    .ai-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #c77dff, #e040fb);
+      box-shadow: 0 0 10px rgba(155,93,229,0.6);
+    }
+
+    /* ─── RESPONSIVE ─────────────────────────────────────────────── */
+    @media (max-width: 1024px) {
+      .hero-inner            { grid-template-columns: 1fr; }
+      .aurora-svg            { display: none; }
+      .how-layout,
+      .cli-layout,
+      .artifacts-layout      { grid-template-columns: 1fr; }
+      .features-grid,
+      .packages-grid         { grid-template-columns: 1fr 1fr; }
+      .footer-inner          { grid-template-columns: 1fr 1fr; }
+      .nav-links             { display: none; }
+      .cli-terminal          { position: static; }
+    }
+    @media (max-width: 640px) {
+      .hero-h1               { font-size: 44px; letter-spacing: -2px; }
+      .features-grid,
+      .packages-grid         { grid-template-columns: 1fr; }
+      .footer-inner          { grid-template-columns: 1fr; }
+      .stats-inner .stat-divider { display: none; }
+      .section-heading       { font-size: 40px; letter-spacing: -1.5px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ─── NAV ───────────────────────────────────────────────────────── -->
+  <nav id="nav" role="navigation" aria-label="Main navigation">
+    <div class="nav-inner">
+      <a href="#" class="nav-logo" id="logo-link" aria-label="StellarShip home">
+        <div class="nav-logo-mark" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </div>
+        <span class="nav-wordmark">StellarShip</span>
+      </a>
+      <ul class="nav-links" role="list">
+        <li><a href="#features" id="nav-features">Features</a></li>
+        <li><a href="#how" id="nav-how">How it works</a></li>
+        <li><a href="#cli" id="nav-cli">CLI</a></li>
+        <li><a href="#packages" id="nav-packages">Packages</a></li>
+        <li>
+          <a href="https://github.com/Miss-shelby/StellarShip" id="nav-github" target="_blank" rel="noopener">
+            GitHub
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M2 8L8 2M8 2H3.5M8 2V6.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+        </li>
+      </ul>
+      <div class="nav-right">
+        <div class="search-bar" role="search">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.2"/>
+            <path d="M9.5 9.5L12.5 12.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+          <input id="search-input" type="text" placeholder="Search or ask AI" aria-label="Search or ask AI" />
+          <span class="kbd-badge" aria-label="Keyboard shortcut">⌘K</span>
+        </div>
+        <a href="https://www.npmjs.com/package/@caatinga/cli" id="nav-npm" class="pill-btn" style="font-size:14px;padding:7px 18px;" target="_blank" rel="noopener">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M7 1L13 4V10L7 13L1 10V4L7 1Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+            <path d="M7 1V13M1 4L13 4" stroke="currentColor" stroke-width="1.2"/>
+          </svg>
+          Install
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ─── HERO ──────────────────────────────────────────────────────── -->
+  <section id="hero" aria-label="Hero section">
+    <div class="hero-aurora" aria-hidden="true">
+      <!-- Animated aurora SVG -->
+      <svg class="aurora-svg" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <filter id="blur1"><feGaussianBlur stdDeviation="18"/></filter>
+          <filter id="blur2"><feGaussianBlur stdDeviation="28"/></filter>
+          <filter id="blur3"><feGaussianBlur stdDeviation="12"/></filter>
+        </defs>
+        <!-- Violet ribbon -->
+        <path d="M-50 280 Q150 160 350 220 Q550 280 800 180" stroke="#9b5de5" stroke-width="80" stroke-linecap="round" fill="none" opacity="0.55" filter="url(#blur1)">
+          <animate attributeName="d" dur="12s" repeatCount="indefinite"
+            values="M-50 280 Q150 160 350 220 Q550 280 800 180;
+                    M-50 260 Q150 200 350 180 Q550 160 800 220;
+                    M-50 280 Q150 160 350 220 Q550 280 800 180"/>
+        </path>
+        <!-- Magenta ribbon -->
+        <path d="M-50 350 Q200 200 400 300 Q600 400 850 260" stroke="#e040fb" stroke-width="60" stroke-linecap="round" fill="none" opacity="0.45" filter="url(#blur2)">
+          <animate attributeName="d" dur="15s" repeatCount="indefinite"
+            values="M-50 350 Q200 200 400 300 Q600 400 850 260;
+                    M-50 300 Q200 380 400 260 Q600 150 850 340;
+                    M-50 350 Q200 200 400 300 Q600 400 850 260"/>
+        </path>
+        <!-- Green ribbon -->
+        <path d="M100 450 Q300 320 500 380 Q700 440 900 300" stroke="#00f5a0" stroke-width="40" stroke-linecap="round" fill="none" opacity="0.35" filter="url(#blur1)">
+          <animate attributeName="d" dur="18s" repeatCount="indefinite"
+            values="M100 450 Q300 320 500 380 Q700 440 900 300;
+                    M100 380 Q300 480 500 320 Q700 200 900 380;
+                    M100 450 Q300 320 500 380 Q700 440 900 300"/>
+        </path>
+        <!-- Thin bright violet highlight -->
+        <path d="M-50 260 Q200 150 400 240 Q600 330 850 200" stroke="#d8b4fe" stroke-width="12" stroke-linecap="round" fill="none" opacity="0.4" filter="url(#blur3)">
+          <animate attributeName="d" dur="10s" repeatCount="indefinite"
+            values="M-50 260 Q200 150 400 240 Q600 330 850 200;
+                    M-50 220 Q200 310 400 200 Q600 100 850 260;
+                    M-50 260 Q200 150 400 240 Q600 330 850 200"/>
+        </path>
+        <!-- Glow orb violet -->
+        <ellipse cx="520" cy="240" rx="180" ry="120" fill="#6b21a8" opacity="0.2" filter="url(#blur2)">
+          <animate attributeName="cy" dur="8s" repeatCount="indefinite" values="240;200;240"/>
+        </ellipse>
+        <!-- Glow orb magenta -->
+        <ellipse cx="680" cy="360" rx="140" ry="90" fill="#e040fb" opacity="0.12" filter="url(#blur2)">
+          <animate attributeName="cx" dur="11s" repeatCount="indefinite" values="680;620;680"/>
+        </ellipse>
+      </svg>
+    </div>
+
+    <div class="hero-inner">
+      <div class="hero-content">
+        <div class="hero-badge" id="hero-badge">
+          <span class="hero-badge-dot" aria-hidden="true"></span>
+          v1.0 stable — npm major 3.x
+        </div>
+        <h1 class="hero-h1" id="hero-heading">
+          Ship Soroban<br/>
+          contracts <em>with<br/>confidence.</em>
+        </h1>
+        <p class="hero-sub">
+          Deployment orchestration, Git-tracked artifacts, and auto-generated TypeScript bindings for the Stellar network.
+        </p>
+        <div class="hero-actions">
+          <a href="#how" id="hero-cta" class="pill-btn">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M3 7H11M11 7L7.5 3.5M11 7L7.5 10.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Get started
+          </a>
+          <div class="hero-code-snippet" id="hero-install" aria-label="Install command">
+            <span class="prompt">$</span>
+            <span class="cmd">npm i -g @stellarship/cli</span>
+          </div>
+        </div>
+      </div>
+      <div aria-hidden="true"></div><!-- aurora fills this col -->
+    </div>
+
+    <div class="hero-scroll-hint" aria-hidden="true">
+      <span>scroll</span>
+      <svg width="12" height="16" viewBox="0 0 12 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M6 1V13M6 13L2 9M6 13L10 9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- ─── STATS ─────────────────────────────────────────────────────── -->
+  <section id="stats" aria-label="Project statistics">
+    <div class="container">
+      <div class="stats-inner">
+        <div class="stat-item">
+          <div class="stat-value">3.x</div>
+          <div class="stat-label">Stable npm major</div>
+        </div>
+        <div class="stat-divider" aria-hidden="true"></div>
+        <div class="stat-item">
+          <div class="stat-value">18</div>
+          <div class="stat-label">CLI commands</div>
+        </div>
+        <div class="stat-divider" aria-hidden="true"></div>
+        <div class="stat-item">
+          <div class="stat-value">3</div>
+          <div class="stat-label">Published packages</div>
+        </div>
+        <div class="stat-divider" aria-hidden="true"></div>
+        <div class="stat-item">
+          <div class="stat-value">Node 22+</div>
+          <div class="stat-label">Required runtime</div>
+        </div>
+        <div class="stat-divider" aria-hidden="true"></div>
+        <div class="stat-item">
+          <div class="stat-value">MIT</div>
+          <div class="stat-label">License</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── FEATURES ─────────────────────────────────────────────────── -->
+  <section id="features" aria-labelledby="features-heading">
+    <div class="container">
+      <div class="features-header">
+        <p class="sub-label">Core pillars</p>
+        <h2 id="features-heading" class="section-heading">
+          Everything you need<br/>to go from code to chain.
+        </h2>
+      </div>
+      <div class="features-grid" role="list">
+        <article class="feature-card" role="listitem">
+          <div class="feature-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9 1L16 5V13L9 17L2 13V5L9 1Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+              <path d="M9 1V17M2 5L16 5" stroke="currentColor" stroke-width="1.2"/>
+            </svg>
+          </div>
+          <h3>Deployment Orchestration</h3>
+          <p>Build and deploy multiple Soroban contracts in one command. StellarShip handles dependency ordering, graph-aware deploys, and upgrades across environments.</p>
+        </article>
+        <article class="feature-card" role="listitem">
+          <div class="feature-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="3" width="14" height="12" rx="2" stroke="currentColor" stroke-width="1.2"/>
+              <path d="M6 7H12M6 10H10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h3>Git-Tracked Artifacts</h3>
+          <p>Every deployment writes contract IDs and WASM hashes to <code>stellarship.artifacts.json</code>. Commit it. No hosted registry, no drift between teammates.</p>
+        </article>
+        <article class="feature-card" role="listitem">
+          <div class="feature-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M5 4L2 9L5 14" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M13 4L16 9L13 14" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M10 3L8 15" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h3>TypeScript Bindings</h3>
+          <p>Auto-generate browser-ready, fully typed contract clients on every deploy. Import and call your Soroban functions from any frontend with zero boilerplate.</p>
+        </article>
+        <article class="feature-card" role="listitem">
+          <div class="feature-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.2"/>
+              <path d="M9 5V9L12 11" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h3>Wallet Adapters</h3>
+          <p>Connect any Stellar-compatible wallet through a unified <code>WalletAdapter</code> interface. React hooks included. No manual signer setup required.</p>
+        </article>
+        <article class="feature-card" role="listitem">
+          <div class="feature-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 5C3 3.9 3.9 3 5 3H13C14.1 3 15 3.9 15 5V9C15 13 9 16 9 16C9 16 3 13 3 9V5Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+              <path d="M6.5 9L8 10.5L11.5 7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <h3>Atomic Safety</h3>
+          <p>Artifact writes are atomic. Recovery scenarios are documented. Rollback is a single command. Your deployment state is always consistent and recoverable.</p>
+        </article>
+        <article class="feature-card" role="listitem">
+          <div class="feature-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 9H6L8 4L10 14L12 9H15" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <h3>Full CI Integration</h3>
+          <p>Built-in smoke tests, regression checks, and a <code>ship ci</code> command that mirrors your local dev flow in any CI environment. Ship with confidence.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── HOW IT WORKS ──────────────────────────────────────────────── -->
+  <section id="how" aria-labelledby="how-heading">
+    <div class="container">
+      <div class="how-layout">
+        <div class="how-left">
+          <p class="sub-label">Under the hood</p>
+          <h2 id="how-heading" class="section-heading">
+            Coordinate.<br/>Deploy.<br/>Connect.
+          </h2>
+          <p>
+            StellarShip is the coordination layer on top of the official Stellar toolchain. Build, deploy, and invoke still delegate to Stellar CLI — you keep full access to the raw stack. StellarShip manages orchestration, artifact versioning, and the runtime bridge to your frontend.
+          </p>
+          <div class="pipeline" role="list">
+            <div class="pipeline-step" role="listitem">
+              <div class="step-num" aria-hidden="true">01</div>
+              <div class="step-content">
+                <h4>Configure</h4>
+                <p>Declare contracts, WASM paths, and network targets in <code>stellarship.config.ts</code>.</p>
+              </div>
+            </div>
+            <div class="pipeline-step" role="listitem">
+              <div class="step-num" aria-hidden="true">02</div>
+              <div class="step-content">
+                <h4>Build</h4>
+                <p><code>ship build</code> compiles your Rust contracts to WASM via Stellar CLI.</p>
+              </div>
+            </div>
+            <div class="pipeline-step" role="listitem">
+              <div class="step-num" aria-hidden="true">03</div>
+              <div class="step-content">
+                <h4>Deploy</h4>
+                <p><code>ship deploy</code> submits contracts, records IDs in artifacts, and triggers binding generation.</p>
+              </div>
+            </div>
+            <div class="pipeline-step" role="listitem">
+              <div class="step-num" aria-hidden="true">04</div>
+              <div class="step-content">
+                <h4>Connect</h4>
+                <p><code>@stellarship/client</code> wires artifacts + wallet to your frontend automatically.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="how-right" aria-label="Deployment pipeline diagram">
+          <div class="diagram-panel">
+            <div class="diagram-bar">
+              <div class="dot dot-red" aria-hidden="true"></div>
+              <div class="dot dot-yellow" aria-hidden="true"></div>
+              <div class="dot dot-green" aria-hidden="true"></div>
+              <span class="diagram-bar-label">stellarship — testnet</span>
+            </div>
+            <div class="diagram-body">
+              <div class="d-row">
+                <div class="d-icon" aria-hidden="true">⚙️</div>
+                <span class="d-name">stellarship.config.ts</span>
+                <span class="d-tag info">configured</span>
+              </div>
+              <div class="d-arrow" aria-hidden="true" style="padding-left:12px;">↓</div>
+              <div class="d-row">
+                <div class="d-icon" aria-hidden="true">🦀</div>
+                <span class="d-name">ship build counter</span>
+                <span class="d-tag success">compiled</span>
+              </div>
+              <div class="d-arrow" aria-hidden="true" style="padding-left:12px;">↓</div>
+              <div class="d-row">
+                <div class="d-icon" aria-hidden="true">🚀</div>
+                <span class="d-name">ship deploy counter</span>
+                <span class="d-tag success">deployed</span>
+              </div>
+              <div class="d-arrow" aria-hidden="true" style="padding-left:12px;">↓</div>
+              <div class="d-row">
+                <div class="d-icon" aria-hidden="true">📄</div>
+                <span class="d-name">artifacts.json updated</span>
+                <span class="d-tag info">committed</span>
+              </div>
+              <div class="d-arrow" aria-hidden="true" style="padding-left:12px;">↓</div>
+              <div class="d-row">
+                <div class="d-icon" aria-hidden="true">🔗</div>
+                <span class="d-name">TS bindings generated</span>
+                <span class="d-tag success">ready</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── CLI ──────────────────────────────────────────────────────── -->
+  <section id="cli" aria-labelledby="cli-heading">
+    <div class="container">
+      <div class="cli-layout">
+        <div class="cli-header">
+          <p class="sub-label">Command line</p>
+          <h2 id="cli-heading" class="section-heading">
+            One tool.<br/>Full lifecycle.
+          </h2>
+          <p>Every command you need from init to production — deployment, inspection, rollback, smoke testing, and CI integration, all under <code>ship</code>.</p>
+          <nav class="cmd-list" aria-label="CLI commands">
+            <div class="cmd-row"><span class="cmd-name"><span class="prefix">ship </span>init</span><span class="cmd-desc">Scaffold a new project from a template</span><svg class="cmd-arrow" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3 7H11M11 7L7.5 3.5M11 7L7.5 10.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="cmd-row"><span class="cmd-name"><span class="prefix">ship </span>build</span><span class="cmd-desc">Compile contracts to WASM</span><svg class="cmd-arrow" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3 7H11M11 7L7.5 3.5M11 7L7.5 10.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="cmd-row"><span class="cmd-name"><span class="prefix">ship </span>deploy</span><span class="cmd-desc">Deploy contracts and update artifacts</span><svg class="cmd-arrow" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3 7H11M11 7L7.5 3.5M11 7L7.5 10.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="cmd-row"><span class="cmd-name"><span class="prefix">ship </span>upgrade</span><span class="cmd-desc">Upgrade a deployed contract's WASM</span><svg class="cmd-arrow" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3 7H11M11 7L7.5 3.5M11 7L7.5 10.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="cmd-row"><span class="cmd-name"><span class="prefix">ship </span>rollback</span><span class="cmd-desc">Roll back to a previous deployment</span><svg class="cmd-arrow" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3 7H11M11 7L7.5 3.5M11 7L7.5 10.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="cmd-row"><span class="cmd-name"><span class="prefix">ship </span>generate</span><span class="cmd-desc">Regenerate TypeScript bindings</span><svg class="cmd-arrow" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3 7H11M11 7L7.5 3.5M11 7L7.5 10.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="cmd-row"><span class="cmd-name"><span class="prefix">ship </span>doctor</span><span class="cmd-desc">Verify all prerequisites are in place</span><svg class="cmd-arrow" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3 7H11M11 7L7.5 3.5M11 7L7.5 10.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="cmd-row"><span class="cmd-name"><span class="prefix">ship </span>smoke</span><span class="cmd-desc">Run smoke tests against deployed contracts</span><svg class="cmd-arrow" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3 7H11M11 7L7.5 3.5M11 7L7.5 10.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          </nav>
+        </div>
+        <div class="cli-terminal" role="region" aria-label="Terminal demo">
+          <div class="term-bar">
+            <div class="dot dot-red" aria-hidden="true"></div>
+            <div class="dot dot-yellow" aria-hidden="true"></div>
+            <div class="dot dot-green" aria-hidden="true"></div>
+            <span style="font-family:var(--font-mono);font-size:12px;color:var(--color-graphite);margin-left:12px;">zsh — my-dapp</span>
+          </div>
+          <div class="term-body" aria-label="Example terminal session">
+            <div class="term-line"><span class="term-prompt">$</span><span class="term-cmd">ship doctor --network testnet --source alice</span></div>
+            <div class="term-line term-out success">✓ Stellar CLI 27.0.0</div>
+            <div class="term-line term-out success">✓ Rust 1.84.0 (wasm32v1-none)</div>
+            <div class="term-line term-out success">✓ Identity alice found</div>
+            <div class="term-spacer"></div>
+            <div class="term-line"><span class="term-prompt">$</span><span class="term-cmd">ship init my-dapp && cd my-dapp</span></div>
+            <div class="term-line term-out info">◆ Scaffolding from template: react-vite</div>
+            <div class="term-line term-out success">✓ Project ready</div>
+            <div class="term-spacer"></div>
+            <div class="term-line"><span class="term-prompt">$</span><span class="term-cmd">ship deploy counter --network testnet --source alice</span></div>
+            <div class="term-line term-out dim">  Building counter...</div>
+            <div class="term-line term-out success">✓ WASM compiled (12.4 KB)</div>
+            <div class="term-line term-out dim">  Submitting to testnet...</div>
+            <div class="term-line term-out success">✓ Deployed → CABCD1234...EF56</div>
+            <div class="term-line term-out info">◆ Generating TypeScript bindings</div>
+            <div class="term-line term-out success">✓ src/contracts/generated/counter.ts</div>
+            <div class="term-line term-out success">✓ stellarship.artifacts.json updated</div>
+            <div class="term-spacer"></div>
+            <div class="term-line"><span class="term-prompt">$</span><span class="term-cursor" aria-label="Cursor"></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── ARTIFACTS ─────────────────────────────────────────────────── -->
+  <section id="artifacts" aria-labelledby="artifacts-heading">
+    <div class="artifacts-bg-glow" aria-hidden="true"></div>
+    <div class="container">
+      <div class="artifacts-layout">
+        <div class="artifacts-json" aria-label="stellarship.artifacts.json example">
+          <div class="json-bar">
+            <div class="dot dot-red" aria-hidden="true"></div>
+            <div class="dot dot-yellow" aria-hidden="true"></div>
+            <div class="dot dot-green" aria-hidden="true"></div>
+            <span class="json-filename">stellarship.artifacts.json</span>
+            <div class="json-git-badge" aria-label="Git committed">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <circle cx="5" cy="5" r="2" stroke="currentColor" stroke-width="1.2"/>
+                <path d="M5 1V3M5 7V9M1 5H3M7 5H9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+              </svg>
+              committed to git
+            </div>
+          </div>
+          <div class="json-body" role="code" aria-label="JSON artifact file example">
+<span class="jp">{</span><br/>
+&nbsp;&nbsp;<span class="jk">"project"</span><span class="jp">:</span> <span class="jv">"my-dapp"</span><span class="jp">,</span><br/>
+&nbsp;&nbsp;<span class="jk">"version"</span><span class="jp">:</span> <span class="jn">2</span><span class="jp">,</span><br/>
+&nbsp;&nbsp;<span class="jk">"networks"</span><span class="jp">:</span> <span class="jp">{</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="jk">"testnet"</span><span class="jp">:</span> <span class="jp">{</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="jk">"contracts"</span><span class="jp">:</span> <span class="jp">{</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="jk">"counter"</span><span class="jp">:</span> <span class="jp">{</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="jk">"contractId"</span><span class="jp">:</span> <span class="jv">"CABCD..."</span><span class="jp">,</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="jk">"wasmHash"</span><span class="jp">:</span> <span class="jv">"a1b2c3..."</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="jp">}</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="jp">}</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="jp">}</span><br/>
+&nbsp;&nbsp;<span class="jp">}</span><br/>
+<span class="jp">}</span>
+          </div>
+        </div>
+        <div class="artifacts-right">
+          <p class="sub-label">Artifacts first</p>
+          <h2 id="artifacts-heading" class="section-heading">
+            Your source of<br/>truth. In Git.
+          </h2>
+          <p>
+            No more copying contract IDs into <code>.env</code> files or losing track of which contract is deployed where. Every deployment writes a structured record — committed alongside your code.
+          </p>
+          <div class="benefit-list" role="list">
+            <div class="benefit-item" role="listitem">
+              <div class="benefit-icon" aria-hidden="true">🔒</div>
+              <div class="benefit-text">
+                <h4>Atomic writes</h4>
+                <p>Artifact updates are atomic. A failed deploy never leaves you with a corrupt state.</p>
+              </div>
+            </div>
+            <div class="benefit-item" role="listitem">
+              <div class="benefit-icon" aria-hidden="true">🌐</div>
+              <div class="benefit-text">
+                <h4>Per-network keying</h4>
+                <p>Testnet and mainnet IDs coexist in the same file. Never mix environments again.</p>
+              </div>
+            </div>
+            <div class="benefit-item" role="listitem">
+              <div class="benefit-icon" aria-hidden="true">🔄</div>
+              <div class="benefit-text">
+                <h4>Schema versioning</h4>
+                <p>The artifact format is frozen and versioned. Migrations run automatically.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── PACKAGES ─────────────────────────────────────────────────── -->
+  <section id="packages" aria-labelledby="packages-heading">
+    <div class="container">
+      <div class="packages-header">
+        <p class="sub-label">Monorepo</p>
+        <h2 id="packages-heading" class="section-heading">Three packages.<br/>One mission.</h2>
+      </div>
+      <div class="packages-grid" role="list">
+        <article class="package-card" role="listitem">
+          <div class="pkg-name">@stellarship/cli</div>
+          <h3>The Command Line</h3>
+          <p>The <code>ship</code> binary. Everything you run in the terminal — from project init to production rollback.</p>
+          <ul class="pkg-features" aria-label="CLI features">
+            <li class="pkg-feature">init, build, deploy, upgrade</li>
+            <li class="pkg-feature">rollback, migrate, sync-env</li>
+            <li class="pkg-feature">doctor, smoke, regression, ci</li>
+            <li class="pkg-feature">identity, inspect, estimate</li>
+          </ul>
+        </article>
+        <article class="package-card" role="listitem">
+          <div class="pkg-name">@stellarship/core</div>
+          <h3>The Engine</h3>
+          <p>Config loading, shell orchestration, Stellar CLI adapters, and the error catalog. The foundation everything builds on.</p>
+          <ul class="pkg-features" aria-label="Core features">
+            <li class="pkg-feature">Config parsing &amp; validation</li>
+            <li class="pkg-feature">Stellar CLI adapter layer</li>
+            <li class="pkg-feature">STELLARSHIP_* error codes</li>
+            <li class="pkg-feature">Deployment graph resolution</li>
+          </ul>
+        </article>
+        <article class="package-card" role="listitem">
+          <div class="pkg-name">@stellarship/client</div>
+          <h3>The Runtime</h3>
+          <p>Browser and Node.js contract client, wallet adapters, and React hooks. Connects your frontend to deployed contracts with zero boilerplate.</p>
+          <ul class="pkg-features" aria-label="Client features">
+            <li class="pkg-feature">Type-safe contract calls</li>
+            <li class="pkg-feature">Unified WalletAdapter API</li>
+            <li class="pkg-feature">React hooks included</li>
+            <li class="pkg-feature">Auto-resolves artifact IDs</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── CTA ──────────────────────────────────────────────────────── -->
+  <section id="cta" aria-labelledby="cta-heading">
+    <svg class="cta-aurora" viewBox="0 0 1280 400" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs><filter id="cblur"><feGaussianBlur stdDeviation="40"/></filter></defs>
+      <ellipse cx="640" cy="200" rx="500" ry="200" fill="#9b5de5" opacity="0.15" filter="url(#cblur)"/>
+      <ellipse cx="900" cy="300" rx="300" ry="150" fill="#e040fb" opacity="0.1" filter="url(#cblur)"/>
+      <ellipse cx="380" cy="150" rx="280" ry="120" fill="#00f5a0" opacity="0.07" filter="url(#cblur)"/>
+    </svg>
+    <div class="container">
+      <div class="cta-inner">
+        <p class="sub-label">Ready to launch?</p>
+        <h2 id="cta-heading">Your first deploy.<br/>Under ten minutes.</h2>
+        <p>Install StellarShip, run <code>ship doctor</code>, and go from zero to a live Soroban contract with a wired TypeScript frontend — in one session.</p>
+        <div class="cta-actions">
+          <a href="https://www.npmjs.com/package/@caatinga/cli" id="cta-install" class="pill-btn" target="_blank" rel="noopener">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M3 7H11M11 7L7.5 3.5M11 7L7.5 10.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Get started
+          </a>
+          <a href="https://github.com/Miss-shelby/StellarShip" id="cta-github" class="ghost-btn" target="_blank" rel="noopener">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M7 1C3.69 1 1 3.69 1 7C1 9.67 2.74 11.93 5.14 12.73C5.44 12.79 5.55 12.6 5.55 12.44C5.55 12.3 5.54 11.85 5.54 11.34C4 11.62 3.6 11.03 3.48 10.72C3.41 10.56 3.12 10.08 2.87 9.94C2.67 9.83 2.37 9.55 2.86 9.54C3.32 9.53 3.65 9.98 3.76 10.15C4.28 11.03 5.23 10.78 5.58 10.62C5.63 10.22 5.79 9.96 5.97 9.81C4.55 9.65 3.07 9.1 3.07 6.72C3.07 6.04 3.32 5.47 3.78 5.03C3.71 4.87 3.49 4.22 3.85 3.34C3.85 3.34 4.35 3.17 5.55 4C6.05 3.86 6.58 3.79 7.11 3.79C7.64 3.79 8.17 3.86 8.67 4C9.87 3.16 10.37 3.34 10.37 3.34C10.73 4.22 10.51 4.87 10.44 5.03C10.9 5.47 11.15 6.03 11.15 6.72C11.15 9.11 9.66 9.65 8.24 9.81C8.47 10.01 8.67 10.39 8.67 10.99C8.67 11.85 8.66 12.54 8.66 12.74C8.66 12.9 8.77 13.1 9.07 13.03C11.26 12.24 13 9.97 13 7C13 3.69 10.31 1 7 1Z" fill="currentColor"/>
+            </svg>
+            View on GitHub
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── FOOTER ────────────────────────────────────────────────────── -->
+  <footer id="footer" role="contentinfo">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <div class="nav-logo" aria-label="StellarShip">
+            <div class="nav-logo-mark" aria-hidden="true">
+              <span></span><span></span><span></span>
+            </div>
+            <span class="nav-wordmark">StellarShip</span>
+          </div>
+          <p>Deployment orchestration and versioned artifacts for Soroban smart contracts on the Stellar network.</p>
+        </div>
+        <nav class="footer-col" aria-label="Documentation links">
+          <h4>Docs</h4>
+          <ul role="list">
+            <li><a href="./docs/getting-started.md">Getting started</a></li>
+            <li><a href="./docs/cli.md">CLI reference</a></li>
+            <li><a href="./docs/client.md">Client</a></li>
+            <li><a href="./docs/wallets.md">Wallets</a></li>
+            <li><a href="./docs/troubleshooting.md">Troubleshooting</a></li>
+          </ul>
+        </nav>
+        <nav class="footer-col" aria-label="Development links">
+          <h4>Develop</h4>
+          <ul role="list">
+            <li><a href="./docs/architecture.md">Architecture</a></li>
+            <li><a href="./docs/adr/index.md">ADRs</a></li>
+            <li><a href="./docs/public-api.md">Public API</a></li>
+            <li><a href="./docs/errors.md">Error codes</a></li>
+            <li><a href="./CONTRIBUTING.md">Contributing</a></li>
+          </ul>
+        </nav>
+        <nav class="footer-col" aria-label="Community links">
+          <h4>Community</h4>
+          <ul role="list">
+            <li><a href="https://github.com/Miss-shelby/StellarShip" target="_blank" rel="noopener">GitHub</a></li>
+            <li><a href="https://www.npmjs.com/package/@caatinga/cli" target="_blank" rel="noopener">npm</a></li>
+            <li><a href="./packages/cli/CHANGELOG.md">Changelog</a></li>
+            <li><a href="./ROADMAP.md">Roadmap</a></li>
+            <li><a href="./LICENSE">MIT License</a></li>
+          </ul>
+        </nav>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2026 StellarShip. MIT License.</p>
+        <div class="footer-social" aria-label="Social links">
+          <a href="https://github.com/Miss-shelby/StellarShip" id="footer-github" target="_blank" rel="noopener" aria-label="GitHub">
+            <svg width="16" height="16" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M7 1C3.69 1 1 3.69 1 7C1 9.67 2.74 11.93 5.14 12.73C5.44 12.79 5.55 12.6 5.55 12.44C5.55 12.3 5.54 11.85 5.54 11.34C4 11.62 3.6 11.03 3.48 10.72C3.41 10.56 3.12 10.08 2.87 9.94C2.67 9.83 2.37 9.55 2.86 9.54C3.32 9.53 3.65 9.98 3.76 10.15C4.28 11.03 5.23 10.78 5.58 10.62C5.63 10.22 5.79 9.96 5.97 9.81C4.55 9.65 3.07 9.1 3.07 6.72C3.07 6.04 3.32 5.47 3.78 5.03C3.71 4.87 3.49 4.22 3.85 3.34C3.85 3.34 4.35 3.17 5.55 4C6.05 3.86 6.58 3.79 7.11 3.79C7.64 3.79 8.17 3.86 8.67 4C9.87 3.16 10.37 3.34 10.37 3.34C10.73 4.22 10.51 4.87 10.44 5.03C10.9 5.47 11.15 6.03 11.15 6.72C11.15 9.11 9.66 9.65 8.24 9.81C8.47 10.01 8.67 10.39 8.67 10.99C8.67 11.85 8.66 12.54 8.66 12.74C8.66 12.9 8.77 13.1 9.07 13.03C11.26 12.24 13 9.97 13 7C13 3.69 10.31 1 7 1Z" fill="currentColor"/>
+            </svg>
+          </a>
+          <a href="https://www.npmjs.com/package/@caatinga/cli" id="footer-npm" target="_blank" rel="noopener" aria-label="npm">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect x="1" y="4" width="14" height="8" rx="1" stroke="currentColor" stroke-width="1.2"/>
+              <path d="M5 8H8M8 8H11M8 8V12" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ─── FLOATING AI ────────────────────────────────────────────────── -->
+  <div id="ask-ai" aria-label="Ask AI assistant">
+    <button class="ask-ai-btn" id="ask-ai-btn" type="button">
+      <div class="ai-dot" aria-hidden="true"></div>
+      Ask AI
+    </button>
+  </div>
+
+  <!-- ─── SCRIPTS ───────────────────────────────────────────────────── -->
+  <script>
+    // Smooth active-link highlight on scroll
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('.nav-links a');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          navLinks.forEach(a => {
+            a.style.color = a.getAttribute('href') === '#' + entry.target.id
+              ? 'var(--color-bone-white)'
+              : '';
+          });
+        }
+      });
+    }, { rootMargin: '-56px 0px -60% 0px', threshold: 0 });
+    sections.forEach(s => observer.observe(s));
+
+    // Cmd-row hover micro-animation is pure CSS above.
+
+    // AI button stub
+    document.getElementById('ask-ai-btn').addEventListener('click', () => {
+      alert('AI assistant coming soon!');
+    });
+  </script>
+</body>
+</html>
