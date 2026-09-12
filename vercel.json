@@ -1,0 +1,7 @@
+{
+  "installCommand": "pnpm install --frozen-lockfile",
+  "buildCommand": "pnpm build",
+  "framework": null,
+  "outputDirectory": ".",
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- packages/ pnpm-lock.yaml"
+}
